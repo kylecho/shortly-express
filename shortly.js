@@ -25,25 +25,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 // To create session
-app.use(session({
-  secret: 'keyboard cat', 
-  cookie: {maxAge: 8000}
-}));
+app.use(session({ secret: 'keyboard cat', cookie: {maxAge: 800000} }));
 
-// app.use(session({
-//   genid: function(req) {
-//     return genuuid() // use UUIDs for session IDs
-//   },
-//   secret: 'keyboard cat'
-// }));
+// session({resave: true, saveUninitialized: true, secret: 'SOMERANDOMSECRETHERE', cookie: { maxAge: 60000 }
 
 app.get('/',
 function(req, res) {
   if (req.session.user === undefined) {
-    console.log(req.session);
     res.redirect('/login');
-  } else if (req.session) {
-    console.log(req.session);
+  } else if (req.session.user) {
     res.render('index');
   }
 });
@@ -61,6 +51,7 @@ function(req, res) {
 
 app.get('/logout',
   function(req, res) {
+    console.log(req.session.user + ' has logged out.');
     req.session.destroy();
     res.redirect('/'); // redirect to login page
   }
@@ -110,8 +101,6 @@ function(req, res) {
   });
 });
 
-////////////////////////////////////////////////////////////////////
-
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
@@ -129,17 +118,18 @@ app.post('/signup',
 function (req, res){
   var username = req.body.username;
   var password = req.body.password;
-  // salt
-  // hash
+  var hash = bcrypt.hashSync(password, 8); // generate hash with salt
+
   Users.create({
     username: username,
-    password: password,
+    hash: hash
   })
-  .then(function(newUser) {
-    // res.send(201, newUser);
-    console.log(Users);
-    console.log(newUser);
-    res.status(201).redirect('/');
+  .then(function() {
+    req.session.regenerate(function(){
+      console.log("A new user " + username + " has signed up.");
+      req.session.user = username; 
+      res.redirect('/');  
+    });
   });
 });
 
@@ -153,7 +143,7 @@ function (req, res){
     if (found && found.attributes.password === password) {
       req.session.regenerate(function(){
         req.session.user = username; 
-        res.redirect('/');  // redirect to root - have access to their links, logout
+        res.redirect('/');
       });
     } else {
       res.redirect('/login');
