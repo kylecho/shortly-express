@@ -53,6 +53,11 @@ function(req, res) {
   });
 });
 
+app.get('/signup', 
+function(req, res) {
+  res.render('signup'); // need to consider cookies
+});
+
 app.post('/links', 
 function(req, res) {
   var uri = req.body.url;
@@ -90,14 +95,20 @@ function(req, res) {
 /************************************************************/
 
 // '/signup'
-// app.post('/signup',
-//   function(req, res){
-//     console.log(req.body);
-//     var username = req.body.username;
-//     var password = req.body.password;
-//     db.knex('users').insert(new User({username: username, password: password}));
-//   }
-// );
+app.post('/signup',
+function (req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+  // salt
+  // hash
+  Users.create({
+    username: username,
+    password: password,
+  })
+  .then(function(newUser) {
+    res.send(201, newUser);
+  });
+});
 
 // '/login'
 
