@@ -3,7 +3,8 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var bcrypt = require('bcrypt-nodejs'); // we added it
-
+var session = require('express-session'); // we added it
+var knex = require('knex');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -23,16 +24,33 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+// To create session
+app.use(session({
+  secret: 'keyboard cat', 
+  cookie: {maxAge: 8000}
+}));
 
-app.get('/', 
+// app.use(session({
+//   genid: function(req) {
+//     return genuuid() // use UUIDs for session IDs
+//   },
+//   secret: 'keyboard cat'
+// }));
+
+app.get('/',
 function(req, res) {
-  res.redirect('/login'); // need to consider cookies
-  res.render('login');
+  if (req.session.user === undefined) {
+    console.log(req.session);
+    res.redirect('/login');
+  } else if (req.session) {
+    console.log(req.session);
+    res.render('index');
+  }
 });
 
 app.get('/login',
   function(req, res) {
-    res.render('login');
+    res.render('login');  // else - error
   }
 );
 
@@ -41,10 +59,12 @@ function(req, res) {
   res.redirect('/login'); // need to consider cookies
 });
 
-// app.get('/links',
-// function(req, res) {
-//   res.redirect('/login'); // need to consider cookies
-// });
+app.get('/logout',
+  function(req, res) {
+    req.session.destroy();
+    res.redirect('/'); // redirect to login page
+  }
+);
 
 app.get('/links', 
 function(req, res) {
@@ -90,9 +110,19 @@ function(req, res) {
   });
 });
 
+////////////////////////////////////////////////////////////////////
+
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+
+function checkUser (req) {
+  if (req.session) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 // '/signup'
 app.post('/signup',
@@ -107,11 +137,30 @@ function (req, res){
   })
   .then(function(newUser) {
     // res.send(201, newUser);
+    console.log(Users);
+    console.log(newUser);
     res.status(201).redirect('/');
   });
 });
 
 // '/login'
+app.post('/login',
+function (req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({ username: username }).fetch().then(function(found) {
+    if (found && found.attributes.password === password) {
+      req.session.regenerate(function(){
+        req.session.user = username; 
+        res.redirect('/');  // redirect to root - have access to their links, logout
+      });
+    } else {
+      res.redirect('/login');
+    }
+  });
+
+});
 
 // '/restricted' vs '/create'?
 
@@ -143,3 +192,4 @@ app.get('/*', function(req, res) {
 
 console.log('Shortly is listening on 4568');
 app.listen(4568);
+
