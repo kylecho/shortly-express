@@ -106,7 +106,8 @@ function (req, res){
     password: password,
   })
   .then(function(newUser) {
-    res.send(201, newUser);
+    // res.send(201, newUser);
+    res.status(201).redirect('/');
   });
 });
 
