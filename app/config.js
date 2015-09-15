@@ -22,6 +22,7 @@ db.knex.schema.hasTable('urls').then(function(exists) {
       link.string('code', 100);
       link.string('title', 255);
       link.integer('visits');
+      link.integer('user_id'); // foreign key for users
       link.timestamps();
     }).then(function (table) {
       console.log('Created Table', table);
@@ -34,7 +35,7 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
     db.knex.schema.createTable('clicks', function (click) {
       click.increments('id').primary();
       click.integer('link_id');
-      click.timestamps();
+      click.timestamps(); // what is timestamps for?
     }).then(function (table) {
       console.log('Created Table', table);
     });
@@ -44,6 +45,20 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
 /************************************************************/
 // Add additional schema definitions below
 /************************************************************/
+
+// add users table
+db.knex.schema.hasTable('users').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('users', function (user) {
+      user.increments('id').primary();
+      user.string('username', 40);
+      user.string('password', 40);
+    }).then(function (table) {
+      console.log('Created Table', table);
+    });
+  }
+});
+// add tokens table
 
 
 module.exports = db;

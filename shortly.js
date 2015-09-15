@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt-nodejs'); // we added it
 
 
 var db = require('./app/config');
@@ -25,13 +26,25 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  res.redirect('/login'); // need to consider cookies
+  res.render('login');
 });
+
+app.get('/login',
+  function(req, res) {
+    res.render('login');
+  }
+);
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  res.redirect('/login'); // need to consider cookies
 });
+
+// app.get('/links',
+// function(req, res) {
+//   res.redirect('/login'); // need to consider cookies
+// });
 
 app.get('/links', 
 function(req, res) {
@@ -76,6 +89,19 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+// '/signup'
+// app.post('/signup',
+//   function(req, res){
+//     console.log(req.body);
+//     var username = req.body.username;
+//     var password = req.body.password;
+//     db.knex('users').insert(new User({username: username, password: password}));
+//   }
+// );
+
+// '/login'
+
+// '/restricted' vs '/create'?
 
 
 /************************************************************/
