@@ -118,7 +118,9 @@ app.post('/signup',
 function (req, res){
   var username = req.body.username;
   var password = req.body.password;
-  var hash = bcrypt.hashSync(password, 8); // generate hash with salt
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync(password, salt); // generate hash with salt
+  console.log(hash);
 
   Users.create({
     username: username,
@@ -137,10 +139,10 @@ function (req, res){
 app.post('/login',
 function (req, res){
   var username = req.body.username;
-  var password = req.body.password;
+  var password = req.body.password; // get password
 
   new User({ username: username }).fetch().then(function(found) {
-    if (found && found.attributes.password === password) {
+    if (found && bcrypt.compareSync(password, found.attributes.hash)) { // compare with db's hash with new hash
       req.session.regenerate(function(){
         req.session.user = username; 
         res.redirect('/');
